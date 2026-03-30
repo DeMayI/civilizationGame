@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <allegro5/allegro_color.h>
 #include "tileMap.hpp"
-
+#include <cmath>
 
 #define SCALED_WIDTH 240
 #define SCALED_HEIGHT 120
@@ -98,6 +98,7 @@ int main()
     sprites_init();
 
     ALLEGRO_BITMAP* mysha = al_load_bitmap("data/mysha.png");
+    ALLEGRO_BITMAP* testPixel = al_load_bitmap("TestPixel.png");
     if(!mysha){
         printf("Failed to load mysha!\n");
         return 1;
@@ -169,15 +170,16 @@ int main()
             al_clear_to_color(al_map_rgb(0, 0, 0));
             
             //Draws hexagonal tiles
-            for(int i = 0; i < 30; i++){
-                for(int j = 0; j < 30; j++){
+            for(int i = -2; i < 30; i++){
+                for(int j = -2; j < 30; j++){
                     if((i % 2) == 0){
-                        al_draw_bitmap(sprites.tiles[i % 3], j * 18, ((i / 2) * 10), 0);
+                        al_draw_bitmap(sprites.tiles[std::abs(i % 3)], j * 18, ((i / 2) * 10), 0);
                     } else {
-                        al_draw_bitmap(sprites.tiles[i % 3], (j * 18) + 9, (((i - 1) / 2) * 10) + 5, 0);
+                        al_draw_bitmap(sprites.tiles[std::abs(i % 3)], (j * 18) + 9, (((i - 1) / 2) * 10) + 5, 0);
                     }
                 }
             }
+            al_draw_bitmap(testPixel, -1, -1, 0);
             //al_draw_bitmap(sprites.tiles[0], 0, 10, 0);
             al_flip_display();
 
