@@ -34,11 +34,11 @@ class tileMap{
         void set_tile(int x, int y, tile* t);
 
         chunk* generateChunk(chunk* currentChunk, int dir);
-        
+
 
         //Converts screen coordinates to grid coordinate
         struct coordinateDouble convertToGridDouble(int x, int y, int camera_x, int camera_y);
-        struct coordinateAxial convertToGridAxial(int x, int y, int camera_x, int camera_y);
+        struct coordinateAxial convertToGridAxial(int x, int y);
         
         struct coordinateAxial double_to_axial(coordinateDouble coor);
         struct coordinateDouble axial_to_double(coordinateAxial hex);

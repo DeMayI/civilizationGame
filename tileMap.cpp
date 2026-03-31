@@ -2,6 +2,24 @@
 #include <cmath>
 
 
+void deleteChunk(chunk* currentChunk){
+    if(currentChunk != nullptr){
+        deleteChunk(currentChunk->get_neighbor(UP));
+        deleteChunk(currentChunk->get_neighbor(DOWN));
+        deleteChunk(currentChunk->get_neighbor(RIGHT));
+        deleteChunk(currentChunk->get_neighbor(LEFT));
+        delete currentChunk;
+    }
+}
+
+tileMap::tileMap(){
+    this->head_chunk = new chunk();
+}
+
+tileMap::~tileMap(){
+    deleteChunk(this->head_chunk);
+}
+
 struct coordinateAxial tileMap::double_to_axial(coordinateDouble coor){
     coordinateAxial newCube;
     newCube.q = coor.y;
@@ -11,22 +29,20 @@ struct coordinateAxial tileMap::double_to_axial(coordinateDouble coor){
 }
 struct coordinateDouble tileMap::axial_to_double(coordinateAxial hex){
     coordinateDouble newDouble;
-    newDouble.y = hex.q;
-    newDouble.x = 2 * hex.r + hex.q;
+    newDouble.x = hex.q;
+    newDouble.y = 2 * hex.r + hex.q;
     return newDouble;
 }
 
-struct coordinateDouble tileMap::convertToGridDouble(int x, int y, int camera_x, int camera_y){
 
-}
 struct coordinateAxial tileMap::axial_round(coordinateAxial frac){
     return cube_to_axial(cube_round(axial_to_cube(frac)));
 }
 
 
-struct coordinateAxial tileMap::convertToGridAxial(int x, int y, int camera_x, int camera_y){
-    float x2 = (x + camera_x) / TILE_SIZE;
-    float y2 = (y + camera_y) / TILE_SIZE;
+struct coordinateAxial tileMap::convertToGridAxial(int x, int y){
+    float x2 = x / TILE_SIZE;
+    float y2 = y / TILE_SIZE;
     coordinateAxial newAxial;
     newAxial.q = (2.0 / 3 * x2);
     newAxial.r = (-1.0 / 3 * x2 + 0.57735 * y2);
@@ -85,7 +101,7 @@ tile* tileMap::get_tile(int x, int y){
     //Iterates through the chunks horizontally, then vertically
 
     //Iterates to the right until we are inside a chunk
-    while(x > CHUNK_SIZE){
+    while(x >= CHUNK_SIZE){
         x -= CHUNK_SIZE;
         //IF the neighor exists, set it to the current, otherwise create a new chunk
         if(currentChunk->get_neighbor(RIGHT) != nullptr){
@@ -105,7 +121,7 @@ tile* tileMap::get_tile(int x, int y){
         }
     }
     //Iterates upwards until we are inside a chunk
-    while(y > CHUNK_SIZE){
+    while(y >= CHUNK_SIZE){
         y -= CHUNK_SIZE;
         if(currentChunk->get_neighbor(UP) != nullptr){
             currentChunk = currentChunk->get_neighbor(UP);
@@ -123,6 +139,6 @@ tile* tileMap::get_tile(int x, int y){
             currentChunk = this->generateChunk(currentChunk, DOWN);
         }
     }
-    
+
     return currentChunk->get_tile(x, y);
 }

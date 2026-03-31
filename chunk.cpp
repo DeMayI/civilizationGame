@@ -27,7 +27,7 @@ chunk::~chunk(){
 
 tile* chunk::get_tile(int x, int y){
     if(x >= 0 && x <= CHUNK_SIZE){
-        if(y >= 0 && x <= CHUNK_SIZE){
+        if(y >= 0 && y <= CHUNK_SIZE){
             return this->tiles[x][y];
         } 
     }
