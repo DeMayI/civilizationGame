@@ -195,8 +195,8 @@ int main()
             {
                 int prevx = highlightX;
                 int prevy = highlightY;
-                mouse_x = event.mouse.x / scale_factor_x;
-                mouse_y = event.mouse.y / scale_factor_y;
+                mouse_x = round(event.mouse.x / scale_factor_x);
+                mouse_y = round(event.mouse.y / scale_factor_y);
                 printf("Mouse X:%d Y:%d\n", mouse_x, mouse_y);
                 struct coordinateAxial highlightedTileAxial = tiles.convertToGridAxial(mouse_x, mouse_y);
                 struct coordinateAxial highlightedTileAxialUnrounded = tiles.convertToGridAxialUnrounded(mouse_x, mouse_y);
