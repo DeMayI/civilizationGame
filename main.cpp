@@ -9,23 +9,43 @@
 
 #define SCALED_WIDTH 240
 #define SCALED_HEIGHT 120
+#define WINDOWED_SCALE_FACTOR 5
+#define WINDOWED 1
 #define KEY_SEEN 1
 #define KEY_DOWN 2
-
+#define SPRITE_COUNT 4
 
 ALLEGRO_DISPLAY* disp;
 ALLEGRO_TRANSFORM t;
 
 void display_init(float& scale_factor_x, float& scale_factor_y){
-    al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW);
-    disp = al_create_display(SCALED_WIDTH, SCALED_HEIGHT);
+    //ALLEGRO_FULLSCREEN_WINDOW
+    if(WINDOWED){
+        al_set_new_display_flags(ALLEGRO_WINDOWED);
+        disp = al_create_display(SCALED_WIDTH * WINDOWED_SCALE_FACTOR, SCALED_HEIGHT * WINDOWED_SCALE_FACTOR);
 
-    scale_factor_x = (float)al_get_display_width(disp) / SCALED_WIDTH;
-    scale_factor_y = (float)al_get_display_height(disp) / SCALED_HEIGHT;
+        scale_factor_x = (float)al_get_display_width(disp) / SCALED_WIDTH;
+        scale_factor_y = (float)al_get_display_height(disp) / SCALED_HEIGHT;
+        
+        al_identity_transform(&t);
+        al_scale_transform(&t, scale_factor_x, scale_factor_y);
+        
+        al_use_transform(&t);
+    }
+    else {
+        al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW);
+        disp = al_create_display(SCALED_WIDTH, SCALED_HEIGHT);
+        
+        scale_factor_x = (float)al_get_display_width(disp) / SCALED_WIDTH;
+        scale_factor_y = (float)al_get_display_height(disp) / SCALED_HEIGHT;
+        
+        al_identity_transform(&t);
+        al_scale_transform(&t, scale_factor_x, scale_factor_y);
+        
+        al_use_transform(&t);
+    }
+
     
-    al_identity_transform(&t);
-	al_scale_transform(&t, scale_factor_x, scale_factor_y);
-	al_use_transform(&t);
 }
 
 void display_deinit(){
@@ -34,19 +54,19 @@ void display_deinit(){
 
 struct SPRITES{
     ALLEGRO_BITMAP* sheet;
-    ALLEGRO_BITMAP* tiles[3];
+    ALLEGRO_BITMAP* tiles[SPRITE_COUNT];
 };
 SPRITES sprites;
 
 void sprites_init(){
     sprites.sheet = al_load_bitmap("data/TempTiles-sheet.png");
-    sprites.tiles[0] = al_create_sub_bitmap(sprites.sheet, 0, 0, 13, 13);
-    sprites.tiles[1] = al_create_sub_bitmap(sprites.sheet, 13, 0, 13, 13);
-    sprites.tiles[2] = al_create_sub_bitmap(sprites.sheet, 26, 0, 13, 13);
+    for(int i = 0; i < SPRITE_COUNT; i++){
+        sprites.tiles[i] = al_create_sub_bitmap(sprites.sheet, i * 13, 0, 13, 13);
+    }
 }
 
 void sprites_deinit(){
-    for(int i = 0; i < 3; i++){
+    for(int i = 0; i < SPRITE_COUNT; i++){
         al_destroy_bitmap(sprites.tiles[i]);
     }
     al_destroy_bitmap(sprites.sheet);
@@ -102,7 +122,7 @@ int main()
         return 1;
     }
 
-    al_hide_mouse_cursor(disp);
+    //al_hide_mouse_cursor(disp);
 
     sprites_init();
 
@@ -179,11 +199,14 @@ int main()
                 mouse_y = event.mouse.y / scale_factor_y;
                 printf("Mouse X:%d Y:%d\n", mouse_x, mouse_y);
                 struct coordinateAxial highlightedTileAxial = tiles.convertToGridAxial(mouse_x, mouse_y);
+                struct coordinateAxial highlightedTileAxialUnrounded = tiles.convertToGridAxialUnrounded(mouse_x, mouse_y);
                 struct coordinateDouble highlightedTile = tiles.axial_to_double(highlightedTileAxial);
+                struct coordinateDouble highlightedTileUnrounded = tiles.axial_to_double(highlightedTileAxialUnrounded);
                 tiles.get_tile(prevx, prevy)->setImageID(DEFAULTID);
                 highlightX = highlightedTile.x;
                 highlightY = highlightedTile.y;
-                printf("Highlighted Tile X:%d Y%d\n", highlightX, highlightY);
+                printf("Highlighted Tile X:%d Y:%d\n", highlightX, highlightY);
+                printf("Highlighted Tile UNROUNDED X:%f Y%f\n", highlightedTileUnrounded.x, highlightedTileUnrounded.y);
                 tiles.get_tile(highlightX, highlightY)->setImageID(2);
                 break;
             }
@@ -204,16 +227,21 @@ int main()
             al_clear_to_color(al_map_rgb(0, 0, 0));
             
             //Draws hexagonal tiles
-            for(int i = -2; i < 30; i++){
-                for(int j = -2; j < 20; j++){
+            for(int i = 0; i < 10; i++){
+                for(int j = 0; j < 20; j++){
+                    al_draw_bitmap(sprites.tiles[tiles.get_tile(j, (i * 2) + (j % 2))->getImageID()], j * 1.5f * TILE_SIZE_WIDTH, (((j % 2)  * (IMG_HEIGHT/2)) + (i * (IMG_HEIGHT - TILE_BORDER))), 0);
+                    /*
                     if((i % 2) == 0){
                         al_draw_bitmap(sprites.tiles[tiles.get_tile(j * 2, i)->getImageID()], j * 18, ((i / 2) * 10), 0);
+                        al_draw_bitmap(testPixel, j * 18, ((i / 2) * 10), 0);
                     } else {
                         al_draw_bitmap(sprites.tiles[tiles.get_tile(j * 2 + 1, i)->getImageID()], (j * 18) + 9, (((i - 1) / 2) * 10) + 5, 0);
+                        al_draw_bitmap(testPixel, (j * 18) + 9, (((i - 1) / 2) * 10) + 5, 0);
                     }
+                    */
                 }
             }
-            //al_draw_bitmap(testPixel, -1, -1, 0);
+            //al_draw_bitmap(testPixel, , 1, 0);
             //al_draw_bitmap(sprites.tiles[0], 0, 10, 0);
             al_flip_display();
 

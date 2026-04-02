@@ -1,5 +1,24 @@
 #include "tileMap.hpp"
 #include <cmath>
+#define HORIZONTALMOD 6
+#define VERTICALMOD 5
+
+struct Orientation {
+    const double f0, f1, f2, f3;
+    const double b0, b1, b2, b3;
+    const double start_angle; // in multiples of 60°
+    Orientation(double f0_, double f1_, double f2_, double f3_,
+                double b0_, double b1_, double b2_, double b3_,
+                double start_angle_)
+    : f0(f0_), f1(f1_), f2(f2_), f3(f3_),
+      b0(b0_), b1(b1_), b2(b2_), b3(b3_),
+      start_angle(start_angle_) {}
+};
+const Orientation layout_flat
+  = Orientation(3.0 / 2.0, 0.0, sqrt(3.0) / 2.0, sqrt(3.0),
+                2.0 / 3.0, 0.0, -1.0 / 3.0, sqrt(3.0) / 3.0,
+                0.0);
+
 
 
 void deleteChunk(chunk* currentChunk){
@@ -22,8 +41,8 @@ tileMap::~tileMap(){
 
 struct coordinateAxial tileMap::double_to_axial(coordinateDouble coor){
     coordinateAxial newCube;
-    newCube.q = coor.y;
-    newCube.r = (coor.x - coor.y) / 2;
+    newCube.q = coor.x;
+    newCube.r = (coor.y - coor.x) / 2;
     return newCube;
     
 }
@@ -41,12 +60,17 @@ struct coordinateAxial tileMap::axial_round(coordinateAxial frac){
 
 
 struct coordinateAxial tileMap::convertToGridAxial(int x, int y){
-    float x2 = x / TILE_SIZE;
-    float y2 = y / TILE_SIZE;
-    coordinateAxial newAxial;
-    newAxial.q = (2.0 / 3 * x2);
-    newAxial.r = (-1.0 / 3 * x2 + 0.57735 * y2);
+    coordinateAxial newAxial = this->convertToGridAxialUnrounded(x, y);
     return axial_round(newAxial);
+}
+struct coordinateAxial tileMap::convertToGridAxialUnrounded(int x, int y){
+    float x2 = (x - HORIZONTALMOD) / TILE_SIZE_WIDTH;
+    float y2 = (y - VERTICALMOD) / TILE_SIZE_HEIGHT;
+    const Orientation& M = layout_flat;
+    coordinateAxial newAxial;
+    newAxial.q = M.b0 * x2 + M.b1 * y2;
+    newAxial.r = M.b2 * x2 + M.b3 * y2;
+    return newAxial;
 }
 
 struct coordinateCube tileMap::cube_round(coordinateCube frac){
@@ -77,7 +101,7 @@ struct coordinateCube tileMap::axial_to_cube(coordinateAxial axial){
     coordinateCube newCube;
     newCube.q = axial.q;
     newCube.r = axial.r;
-    newCube.s = newCube.q * -1 - newCube.r;
+    newCube.s = (newCube.q * -1.0f) - newCube.r;
     return newCube;
 }
 
