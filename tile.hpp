@@ -9,10 +9,16 @@
 
 class tile{
     private:
-     int imageID;
+    //Image id for the background img
+     int bImgID;
+    //Image id for the foreground img
+     int fImgID;
     public:
-        int getImageID();
-        void setImageID(int newID);
+        int getBackground();
+        void setBackground(int newID);
+        int getForeground();
+        void setForeground(int newID);
         tile(int imageID);
+        tile(int imageID, int foregroundID);
         tile();
 };
