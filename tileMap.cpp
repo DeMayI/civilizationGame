@@ -21,22 +21,15 @@ const Orientation layout_flat
 
 
 
-void deleteChunk(chunk* currentChunk){
-    if(currentChunk != nullptr){
-        deleteChunk(currentChunk->get_neighbor(UP));
-        deleteChunk(currentChunk->get_neighbor(DOWN));
-        deleteChunk(currentChunk->get_neighbor(RIGHT));
-        deleteChunk(currentChunk->get_neighbor(LEFT));
-        delete currentChunk;
-    }
-}
-
 tileMap::tileMap(){
     this->head_chunk = new chunk();
+    this->chunks.push_back(this->head_chunk);
 }
 
 tileMap::~tileMap(){
-    deleteChunk(this->head_chunk);
+    for(chunk* c : this->chunks){
+        delete c;
+    }
 }
 
 struct coordinateAxial tileMap::double_to_axial(coordinateDouble coor){
@@ -116,6 +109,9 @@ struct coordinateAxial tileMap::cube_to_axial(coordinateCube cube){
 chunk* tileMap::generateChunk(chunk* currentChunk, int dir){
     chunk* newChunk = new chunk();
     currentChunk->set_neighbor(dir, newChunk);
+    int oppositeDir = (dir == UP) ? DOWN : (dir == DOWN) ? UP : (dir == LEFT) ? RIGHT : LEFT;
+    newChunk->set_neighbor(oppositeDir, currentChunk);
+    this->chunks.push_back(newChunk);
     return newChunk;
 }
 
@@ -163,6 +159,106 @@ tile* tileMap::get_tile(int x, int y){
             currentChunk = this->generateChunk(currentChunk, DOWN);
         }
     }
-
+    
     return currentChunk->get_tile(x, y);
+}
+tileLocation tileMap::get_tile_detailed(int x, int y){
+    chunk* currentChunk = this->head_chunk;
+    //Iterates through the chunks horizontally, then vertically
+
+    //Iterates to the right until we are inside a chunk
+    while(x >= CHUNK_SIZE){
+        x -= CHUNK_SIZE;
+        //IF the neighor exists, set it to the current, otherwise create a new chunk
+        if(currentChunk->get_neighbor(RIGHT) != nullptr){
+            currentChunk = currentChunk->get_neighbor(RIGHT);
+        } else {
+            currentChunk = this->generateChunk(currentChunk, RIGHT);
+        }
+    }
+
+    //Iterates to the left until we are inside a chunk
+    while(x < 0){
+        x += CHUNK_SIZE;
+        if(currentChunk->get_neighbor(LEFT) != nullptr){
+            currentChunk = currentChunk->get_neighbor(LEFT);
+        } else {
+            currentChunk = this->generateChunk(currentChunk, LEFT);
+        }
+    }
+    //Iterates upwards until we are inside a chunk
+    while(y >= CHUNK_SIZE){
+        y -= CHUNK_SIZE;
+        if(currentChunk->get_neighbor(UP) != nullptr){
+            currentChunk = currentChunk->get_neighbor(UP);
+        } else {
+            currentChunk = this->generateChunk(currentChunk, UP);
+        }
+    }
+
+    //Iterates downwards until we are inside a chunk
+    while(y < 0){
+        y += CHUNK_SIZE;
+        if(currentChunk->get_neighbor(DOWN) != nullptr){
+            currentChunk = currentChunk->get_neighbor(DOWN);
+        } else {
+            currentChunk = this->generateChunk(currentChunk, DOWN);
+        }
+    }
+    tileLocation loc;
+    loc.x = x;
+    loc.y = y;
+    loc.c = currentChunk;
+    loc.t = currentChunk->get_tile(x, y);
+    return loc;
+}
+
+void tileMap::set_tile(int x, int y, chunk* residentChunk, tile* newTile){
+    residentChunk->set_tile(x, y, newTile);
+}
+void tileMap::set_tile(int x, int y, tile* newTile){
+    chunk* currentChunk = this->head_chunk;
+    //Iterates through the chunks horizontally, then vertically
+
+    //Iterates to the right until we are inside a chunk
+    while(x >= CHUNK_SIZE){
+        x -= CHUNK_SIZE;
+        //IF the neighor exists, set it to the current, otherwise create a new chunk
+        if(currentChunk->get_neighbor(RIGHT) != nullptr){
+            currentChunk = currentChunk->get_neighbor(RIGHT);
+        } else {
+            currentChunk = this->generateChunk(currentChunk, RIGHT);
+        }
+    }
+
+    //Iterates to the left until we are inside a chunk
+    while(x < 0){
+        x += CHUNK_SIZE;
+        if(currentChunk->get_neighbor(LEFT) != nullptr){
+            currentChunk = currentChunk->get_neighbor(LEFT);
+        } else {
+            currentChunk = this->generateChunk(currentChunk, LEFT);
+        }
+    }
+    //Iterates upwards until we are inside a chunk
+    while(y >= CHUNK_SIZE){
+        y -= CHUNK_SIZE;
+        if(currentChunk->get_neighbor(UP) != nullptr){
+            currentChunk = currentChunk->get_neighbor(UP);
+        } else {
+            currentChunk = this->generateChunk(currentChunk, UP);
+        }
+    }
+
+    //Iterates downwards until we are inside a chunk
+    while(y < 0){
+        y += CHUNK_SIZE;
+        if(currentChunk->get_neighbor(DOWN) != nullptr){
+            currentChunk = currentChunk->get_neighbor(DOWN);
+        } else {
+            currentChunk = this->generateChunk(currentChunk, DOWN);
+        }
+    }
+
+    currentChunk->set_tile(x, y, newTile);
 }

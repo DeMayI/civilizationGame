@@ -8,7 +8,7 @@
 class chunk{
     private:
         //2D array of tile pointers
-        tile*** tiles;
+        vector<vector<tile*>> tiles;
         //Pointer to each neighbor chunk
         chunk* neighbors[4]; //0 = up, 1 = right, 2 = down, 3 = left
     public:

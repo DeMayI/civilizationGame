@@ -17,17 +17,16 @@
 #define KEY_JUST_PRESSED 4
 #define SPRITE_COUNT 4
 
-ALLEGRO_DISPLAY* disp;
-ALLEGRO_TRANSFORM t;
 
-void display_init(float& scale_factor_x, float& scale_factor_y){
+
+void display_init(ALLEGRO_DISPLAY** disp, ALLEGRO_TRANSFORM& t, float& scale_factor_x, float& scale_factor_y){
     //ALLEGRO_FULLSCREEN_WINDOW
     if(WINDOWED){
         al_set_new_display_flags(ALLEGRO_WINDOWED);
-        disp = al_create_display(SCALED_WIDTH * WINDOWED_SCALE_FACTOR, SCALED_HEIGHT * WINDOWED_SCALE_FACTOR);
+        *disp = al_create_display(SCALED_WIDTH * WINDOWED_SCALE_FACTOR, SCALED_HEIGHT * WINDOWED_SCALE_FACTOR);
 
-        scale_factor_x = (float)al_get_display_width(disp) / SCALED_WIDTH;
-        scale_factor_y = (float)al_get_display_height(disp) / SCALED_HEIGHT;
+        scale_factor_x = (float)al_get_display_width(*disp) / SCALED_WIDTH;
+        scale_factor_y = (float)al_get_display_height(*disp) / SCALED_HEIGHT;
         
         al_identity_transform(&t);
         al_scale_transform(&t, scale_factor_x, scale_factor_y);
@@ -36,10 +35,10 @@ void display_init(float& scale_factor_x, float& scale_factor_y){
     }
     else {
         al_set_new_display_flags(ALLEGRO_FULLSCREEN_WINDOW);
-        disp = al_create_display(SCALED_WIDTH, SCALED_HEIGHT);
+        *disp = al_create_display(SCALED_WIDTH, SCALED_HEIGHT);
         
-        scale_factor_x = (float)al_get_display_width(disp) / SCALED_WIDTH;
-        scale_factor_y = (float)al_get_display_height(disp) / SCALED_HEIGHT;
+        scale_factor_x = (float)al_get_display_width(*disp) / SCALED_WIDTH;
+        scale_factor_y = (float)al_get_display_height(*disp) / SCALED_HEIGHT;
         
         al_identity_transform(&t);
         al_scale_transform(&t, scale_factor_x, scale_factor_y);
@@ -50,7 +49,7 @@ void display_init(float& scale_factor_x, float& scale_factor_y){
     
 }
 
-void display_deinit(){
+void display_deinit(ALLEGRO_DISPLAY* disp){
     al_destroy_display(disp);
 }
 
@@ -85,14 +84,16 @@ int main()
     al_init();
     al_install_keyboard();
     al_install_mouse();
-
+    
+    
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     
-    ALLEGRO_FONT* font = al_create_builtin_font();
     
 
-    display_init(scale_factor_x, scale_factor_y);
+    ALLEGRO_DISPLAY* disp = nullptr;
+    ALLEGRO_TRANSFORM t;
+    display_init(&disp, t, scale_factor_x, scale_factor_y);
 
     
 
@@ -110,12 +111,7 @@ int main()
 
     
 
-    ALLEGRO_BITMAP* mysha = al_load_bitmap("data/mysha.png");
-    ALLEGRO_BITMAP* testPixel = al_load_bitmap("TestPixel.png");
-    if(!mysha){
-        printf("Failed to load mysha!\n");
-        return 1;
-    }
+    
 
     bool redraw = true;
     ALLEGRO_EVENT event;
@@ -150,11 +146,11 @@ int main()
     memset(mouseButtons, 0, sizeof(mouseButtons));
 
     //printf("Initializing Session");
-    session currentSession = session();
-
+    session currentSession = session(keys, mouseButtons, &mousePos);
+    
     // Main game loop
-
-    //printf("Starting Game Loop");
+    
+    printf("Starting Game Loop\n");
     while(1)
     {
         bool done = false;
@@ -165,7 +161,7 @@ int main()
             //If its a timer event, redraw screen and update camera position
             case ALLEGRO_EVENT_TIMER:
                 redraw = true;
-                currentSession.tick(keys, mouseButtons, mousePos);
+                currentSession.tick();
                 //Marks each key as seen
                 for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
                     keys[i] &= ~KEY_SEEN;
@@ -180,11 +176,13 @@ int main()
                 keys[event.keyboard.keycode] = KEY_SEEN | KEY_DOWN;
                 if(event.keyboard.keycode == ALLEGRO_KEY_ESCAPE)
                     done = true;
+                currentSession.keyDown(event.keyboard.keycode);
                 break;
             }
             case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
             {
                 mouseButtons[event.mouse.button] = KEY_SEEN | KEY_DOWN;
+                currentSession.mouseDown(event.mouse.button);
                 break;
             }
             case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
@@ -200,7 +198,7 @@ int main()
 
                 //Debug information
                 //printf("Mouse X:%d Y:%d\n", mouse_x, mouse_y);
-                currentSession.updateHighlighted(mousePos);
+                currentSession.updateHighlighted();
                 break;
             }
             case ALLEGRO_EVENT_KEY_UP:
@@ -228,12 +226,13 @@ int main()
             redraw = false;
         }
     }
-
-    al_destroy_bitmap(mysha);
-    al_destroy_font(font);
+    
+    
+    
+    display_deinit(disp);
     
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
-    display_deinit();
+    
     return 0;
 }
