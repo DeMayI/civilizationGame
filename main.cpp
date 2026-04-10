@@ -1,10 +1,11 @@
 #include <allegro5/allegro5.h>
+#include <allegro5/allegro.h>
 #include <allegro5/allegro_font.h>
 #include <stdbool.h>
 #include <allegro5/allegro_image.h>
 #include <stdio.h>
 #include <allegro5/allegro_color.h>
-#include "tileMap.hpp"
+#include "session.hpp"
 #include <cmath>
 
 #define SCALED_WIDTH 240
@@ -13,6 +14,7 @@
 #define WINDOWED 1
 #define KEY_SEEN 1
 #define KEY_DOWN 2
+#define KEY_JUST_PRESSED 4
 #define SPRITE_COUNT 4
 
 ALLEGRO_DISPLAY* disp;
@@ -52,25 +54,7 @@ void display_deinit(){
     al_destroy_display(disp);
 }
 
-struct SPRITES{
-    ALLEGRO_BITMAP* sheet;
-    ALLEGRO_BITMAP* tiles[SPRITE_COUNT];
-};
-SPRITES sprites;
 
-void sprites_init(){
-    sprites.sheet = al_load_bitmap("data/TempTiles-sheet.png");
-    for(int i = 0; i < SPRITE_COUNT; i++){
-        sprites.tiles[i] = al_create_sub_bitmap(sprites.sheet, i * 13, 0, 13, 13);
-    }
-}
-
-void sprites_deinit(){
-    for(int i = 0; i < SPRITE_COUNT; i++){
-        al_destroy_bitmap(sprites.tiles[i]);
-    }
-    al_destroy_bitmap(sprites.sheet);
-}
 
 
 
@@ -124,7 +108,7 @@ int main()
 
     //al_hide_mouse_cursor(disp);
 
-    sprites_init();
+    
 
     ALLEGRO_BITMAP* mysha = al_load_bitmap("data/mysha.png");
     ALLEGRO_BITMAP* testPixel = al_load_bitmap("TestPixel.png");
@@ -146,10 +130,9 @@ int main()
     int camera_size_y = SCALED_HEIGHT;
 
     //Mouse information
-    int mouse_x = 0;
-    int mouse_y = 0;
+    position mousePos;
 
-    //Temporary
+    //The position of the currently highlighted tile
     int highlightX;
     int highlightY;
 
@@ -159,10 +142,19 @@ int main()
     memset(keys, 0, sizeof(keys));
 
 
-    tileMap tiles = tileMap();
+    //Array containing current mouse button state
+    // 0 Not pressed
+    // 1 Pressed
+    // 2 Just Pressed
+    unsigned char mouseButtons[4];
+    memset(mouseButtons, 0, sizeof(mouseButtons));
+
+    //printf("Initializing Session");
+    session currentSession = session();
 
     // Main game loop
 
+    //printf("Starting Game Loop");
     while(1)
     {
         bool done = false;
@@ -173,8 +165,7 @@ int main()
             //If its a timer event, redraw screen and update camera position
             case ALLEGRO_EVENT_TIMER:
                 redraw = true;
-                moveCamera(camera_x, camera_y, camera_speed, keys);
-
+                currentSession.tick(keys, mouseButtons, mousePos);
                 //Marks each key as seen
                 for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
                     keys[i] &= ~KEY_SEEN;
@@ -191,23 +182,25 @@ int main()
                     done = true;
                 break;
             }
+            case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+            {
+                mouseButtons[event.mouse.button] = KEY_SEEN | KEY_DOWN;
+                break;
+            }
+            case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
+                mouseButtons[event.mouse.button] &= ~KEY_DOWN;
+                break;
             case ALLEGRO_EVENT_MOUSE_AXES:
             {
                 int prevx = highlightX;
                 int prevy = highlightY;
-                mouse_x = round(event.mouse.x / scale_factor_x);
-                mouse_y = round(event.mouse.y / scale_factor_y);
-                printf("Mouse X:%d Y:%d\n", mouse_x, mouse_y);
-                struct coordinateAxial highlightedTileAxial = tiles.convertToGridAxial(mouse_x, mouse_y);
-                struct coordinateAxial highlightedTileAxialUnrounded = tiles.convertToGridAxialUnrounded(mouse_x, mouse_y);
-                struct coordinateDouble highlightedTile = tiles.axial_to_double(highlightedTileAxial);
-                struct coordinateDouble highlightedTileUnrounded = tiles.axial_to_double(highlightedTileAxialUnrounded);
-                tiles.get_tile(prevx, prevy)->setImageID(DEFAULTID);
-                highlightX = highlightedTile.x;
-                highlightY = highlightedTile.y;
-                printf("Highlighted Tile X:%d Y:%d\n", highlightX, highlightY);
-                printf("Highlighted Tile UNROUNDED X:%f Y%f\n", highlightedTileUnrounded.x, highlightedTileUnrounded.y);
-                tiles.get_tile(highlightX, highlightY)->setImageID(2);
+                //Converts the Pixel location on the screen to the unscaled pixel location
+                mousePos.x = round(event.mouse.x / scale_factor_x);
+                mousePos.y = round(event.mouse.y / scale_factor_y);
+
+                //Debug information
+                //printf("Mouse X:%d Y:%d\n", mouse_x, mouse_y);
+                currentSession.updateHighlighted(mousePos);
                 break;
             }
             case ALLEGRO_EVENT_KEY_UP:
@@ -225,22 +218,9 @@ int main()
         {
             //Clears the screen to black
             al_clear_to_color(al_map_rgb(0, 0, 0));
-            
+            currentSession.drawMap();
             //Draws hexagonal tiles
-            for(int i = 0; i < 10; i++){
-                for(int j = 0; j < 20; j++){
-                    al_draw_bitmap(sprites.tiles[tiles.get_tile(j, (i * 2) + (j % 2))->getImageID()], j * 1.5f * TILE_SIZE_WIDTH, (((j % 2)  * (IMG_HEIGHT/2)) + (i * (IMG_HEIGHT - TILE_BORDER))), 0);
-                    /*
-                    if((i % 2) == 0){
-                        al_draw_bitmap(sprites.tiles[tiles.get_tile(j * 2, i)->getImageID()], j * 18, ((i / 2) * 10), 0);
-                        al_draw_bitmap(testPixel, j * 18, ((i / 2) * 10), 0);
-                    } else {
-                        al_draw_bitmap(sprites.tiles[tiles.get_tile(j * 2 + 1, i)->getImageID()], (j * 18) + 9, (((i - 1) / 2) * 10) + 5, 0);
-                        al_draw_bitmap(testPixel, (j * 18) + 9, (((i - 1) / 2) * 10) + 5, 0);
-                    }
-                    */
-                }
-            }
+            
             //al_draw_bitmap(testPixel, , 1, 0);
             //al_draw_bitmap(sprites.tiles[0], 0, 10, 0);
             al_flip_display();
@@ -255,6 +235,5 @@ int main()
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
     display_deinit();
-    sprites_deinit();
     return 0;
 }
