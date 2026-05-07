@@ -1,8 +1,11 @@
 //tile.hpp
 //represents a single tile on the map
 #define DEFAULTID 0
-#define TILE_SIZE_WIDTH 32
-#define TILE_SIZE_HEIGHT 32
+#define IMG_WIDTH 13
+#define IMG_HEIGHT 11
+#define TILE_SIZE_WIDTH ((IMG_WIDTH - TILE_BORDER)/ 2.0f)
+#define TILE_SIZE_HEIGHT ((IMG_HEIGHT - TILE_BORDER) / 1.73205080757f)
+#define TILE_BORDER 1
 #include <vector>
 #include <string>
 #include <unordered_map>

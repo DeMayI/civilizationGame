@@ -5,12 +5,19 @@
 //EX; if max size is 2, then there will be 2 chunks in all directions from the head chunk so a 5x5 grid.
 #define MAX_SIZE 2
 
-struct position{
-    int x;
-    int y;
+struct coordinateDouble {
+    float x;
+    float y;
 };
-
-
+struct coordinateAxial {
+    float q;
+    float r;
+};
+struct coordinateCube {
+    float q;
+    float r;
+    float s;
+};
 struct tileLocation{
     int x;
     int y;
@@ -39,6 +46,16 @@ class tileMap{
 
 
         //Converts screen coordinates to grid coordinate
-        struct position convertToGridDouble(int x, int y, int camera_x, int camera_y);
-        struct position convertToGridDouble(int x, int y);
+        struct coordinateDouble convertToGridDouble(int x, int y, int camera_x, int camera_y);
+        struct coordinateAxial convertToGridAxial(int x, int y);
+        struct coordinateAxial convertToGridAxialUnrounded(int x, int y);
+        
+        struct coordinateAxial double_to_axial(coordinateDouble coor);
+        struct coordinateDouble axial_to_double(coordinateAxial hex);
+
+        struct coordinateAxial axial_round(coordinateAxial frac);
+        struct coordinateCube cube_round(coordinateCube frac);
+
+        struct coordinateCube axial_to_cube(coordinateAxial axial);
+        struct coordinateAxial cube_to_axial(coordinateCube cube);
 };

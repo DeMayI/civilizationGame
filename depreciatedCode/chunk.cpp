@@ -6,7 +6,7 @@ chunk::chunk(){
     for(int i = 0; i < CHUNK_SIZE; i++){
         this->tiles[i].resize(CHUNK_SIZE);
         for(int j = 0; j < CHUNK_SIZE; j++){
-            this->tiles[i][j] = new tile((j+i)%3);
+            this->tiles[i][j] = new tile(j%3);
         }
     }
     for(int i = 0; i < 4; i++){
