@@ -2,14 +2,13 @@
 
 
 chunk::chunk(){
-    tile*** tileArray = new tile**[CHUNK_SIZE];
+    this->tiles.resize(CHUNK_SIZE);
     for(int i = 0; i < CHUNK_SIZE; i++){
-        tileArray[i] = new tile*[CHUNK_SIZE];
+        this->tiles[i].resize(CHUNK_SIZE);
         for(int j = 0; j < CHUNK_SIZE; j++){
-            tileArray[i][j] = new tile();
+            this->tiles[i][j] = new tile(j%3);
         }
     }
-    this->tiles = tileArray;
     for(int i = 0; i < 4; i++){
         this->neighbors[i] = nullptr;
     }
@@ -20,27 +19,26 @@ chunk::~chunk(){
         for(int j = 0; j < CHUNK_SIZE; j++){
             delete this->tiles[i][j];
         }
-        delete this->tiles[i];
     }
-    delete this->tiles;
 }
 
 tile* chunk::get_tile(int x, int y){
-    if(x >= 0 && x <= CHUNK_SIZE){
-        if(y >= 0 && y <= CHUNK_SIZE){
+    if(x >= 0 && x < CHUNK_SIZE){
+        if(y >= 0 && y < CHUNK_SIZE){
             return this->tiles[x][y];
-        } 
+        }
     }
     return nullptr;
-
 }
+
 void chunk::set_tile(int x, int y, tile* t){
-    if(x >= 0 && x <= CHUNK_SIZE){
-        if(y >= 0 && x <= CHUNK_SIZE){
+    if(x >= 0 && x < CHUNK_SIZE){
+        if(y >= 0 && y < CHUNK_SIZE){
+            //printf("Updating Tile!\n");
             tile* oldTile = this->tiles[x][y];
             this->tiles[x][y] = t;
             delete oldTile;
-        } 
+        }
     }
 }
 void chunk::set_neighbor(int direction, chunk* neighbor){
