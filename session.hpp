@@ -9,16 +9,12 @@
 #include <string>
 #include <vector>
 using namespace std;
-#define SPRITE_SHEET_LOC "data/TempTiles-sheet.png"
+#define SPRITE_SHEET_LOC "data/TempTiles-sheetGrid.png"
 
 struct SPRITES{
     ALLEGRO_BITMAP* sheet;
     int tileCount;
     vector<ALLEGRO_BITMAP*> tiles;
-};
-struct position{
-    int x;
-    int y;
 };
 
 typedef enum ALLEGRO_MOUSE_BUTTON
@@ -34,12 +30,15 @@ class session{
         tileMap* map;
         SPRITES sprites;
         position* mousePos;
-        coordinateDouble hilightedTile;
+        position hilightedTile;
         unsigned char* keys;
         unsigned char* mouseButtons;
         vector<int> buildings = {TILE_IDENTIFIER_MINE, TILE_IDENTIFIER_LUMBER, TILE_IDENTIFIER_FARM, TILE_IDENTIFIER_RESIDENCE};
         int selectedBuilding;
 
+        position cameraPos;
+        position cameraMod;
+        position cameraRemainder;
     public:
         //Simulates a tick of the game
         void tick();
@@ -58,4 +57,5 @@ class session{
         void mouseDown(unsigned int button);
 
         void updateHighlighted();
+
 };

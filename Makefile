@@ -19,7 +19,7 @@ ALLEGRO_LIBS   = $(shell pkg-config --libs   allegro-5 allegro_image-5 \
 EXE = civilizationGame
 
 SRC_DIR = .
-SRC = $(shell find $(SRC_DIR) -regex ".*\.cpp")
+SRC = $(shell find $(SRC_DIR) -regex ".*\.cpp" -not -path "./depreciatedCode/*")
 
 OBJ_DIR = .obj
 OBJ = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC))

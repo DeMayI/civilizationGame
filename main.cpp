@@ -8,9 +8,9 @@
 #include "session.hpp"
 #include <cmath>
 
-#define SCALED_WIDTH 240
-#define SCALED_HEIGHT 120
-#define WINDOWED_SCALE_FACTOR 5
+#define SCALED_WIDTH 960
+#define SCALED_HEIGHT 480
+#define WINDOWED_SCALE_FACTOR 2
 #define WINDOWED 1
 #define KEY_SEEN 1
 #define KEY_DOWN 2
